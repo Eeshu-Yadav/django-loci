@@ -105,7 +105,7 @@ class AbstractFloorPlanAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
 class AbstractLocationForm(ReadOnlyMixin, forms.ModelForm):
     # define the geometry field to add it in self.fields
     # to render it for view-only
-    geometry = GeometryField(required=True)
+    geometry = GeometryField(required=False)
 
     class Meta:
         exclude = tuple()
@@ -125,6 +125,12 @@ class AbstractLocationForm(ReadOnlyMixin, forms.ModelForm):
             self.set_readonly_attribute(self._user, ["geometry"])
             # user is set on Form class which gets instantiated for each request
             del self.__class__._user
+
+    def clean(self):
+        data = super().clean()
+        if not data.get("is_mobile") and not data.get("geometry"):
+            self.add_error("geometry", _("No geometry value provided."))
+        return data
 
 
 class AbstractFloorPlanInline(TimeReadonlyAdminMixin, admin.StackedInline):
